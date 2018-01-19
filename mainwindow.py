@@ -81,7 +81,6 @@ class Ui_MainWindow(object):
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
         self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addAction(self.actionSave)
         self.menuBar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -96,7 +95,7 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "distance"))
         self.exportSVG.setText(_translate("MainWindow", "export SVG"))
         self.showImage.setText(_translate("MainWindow", "show image"))
-        self.imageLabel.setText(_translate("MainWindow", "ImageLabel"))
+        self.imageLabel.setText(_translate("MainWindow", "Open image to start"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionSave.setText(_translate("MainWindow", "Save"))

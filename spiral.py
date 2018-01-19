@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMainWindow,QApplication, QPushButton, QTextEdit, QV
 from PyQt5.QtGui import QPainter, QImage, QPainterPath
 from PyQt5.QtGui import QPixmap, QColor, QPen, qGray, QPolygon
 from PyQt5.QtSvg import QSvgGenerator
-from PyQt5.QtCore import Qt, QSize, QRect, QPoint, pyqtSlot
+from PyQt5.QtCore import Qt, QSize, QRect, QPoint, pyqtSlot, pyqtSignal
 import time
 
 def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
@@ -15,9 +15,13 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
 
 class Spiraler(QtWidgets.QLabel):
 
+    status_update_signal = pyqtSignal(str)
+
     def __init__(self, parent):
         super(Spiraler, self).__init__(parent=parent)
+        self.status_update_signal.connect(parent.updateStatus)
         self.parent = parent
+        self.image = None
 
     # maybe some good stuff here; https://github.com/baoboa/pyqt5/blob/master/examples/painting/svgviewer/svgviewer.py
     # also intertesting pixelator example here: http://doc.qt.io/qt-5/qtwidgets-itemviews-pixelator-example.html
@@ -53,7 +57,7 @@ class Spiraler(QtWidgets.QLabel):
     # this code is translated from java to python from https://github.com/krummrey/SpiralFromImage
     def paint(self, qp):
         
-        if not self.show:
+        if not self.show or self.image is None:
             return
 
         density = self.density
@@ -136,5 +140,5 @@ class Spiraler(QtWidgets.QLabel):
             points.clear()
 
         process_time = time.time() - start_time
-        self.parent.statusBar.showMessage("finished in %f secs, took %d samples" % (process_time, samples), 1000)
+        self.status_update_signal.emit("finished in %f secs, took %d samples" % (process_time, samples))
 

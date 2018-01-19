@@ -16,13 +16,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.image = None
 
-        # custom widget to show the spiral
         self.spiraler = Spiraler(self)
 
         # hook menus
         self.actionOpen.triggered.connect(self.openFileDialog)
-        self.actionSave.triggered.connect(self.saveFileDialog)
 
         # slots
         self.densitySlider.valueChanged.connect(self.spiraler.updateDensity)
@@ -44,11 +43,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # load the image without having to faff with menus
         image = QPixmap("./fade.jpg")
-        self.updateImage(image)
+        # self.updateImage(image)
 
+    @QtCore.pyqtSlot(str)
+    def updateStatus(self, value):
+        self.statusBar.showMessage(value, 1000)
    
     def updateShow(self, value):
-        if value:
+        if value and self.image is not None:
             self.imageLabel.setPixmap(self.image)
         else:
             self.imageLabel.clear()
@@ -56,7 +58,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(None,"QFileDialog.getOpenFileName()", "","Image Files (*.jpg)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(None,"Choose image", "","Image Files (*.jpg)", options=options)
         if fileName:
             image = QPixmap(fileName)
             if image.isNull():
@@ -71,20 +73,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # can't get scaling to work - oh well.
         #self.image = self.image.scaledToWidth(self.tab_2.width())
         #image = image.scaled(self.tab_2.width(), self.tab_2.height())
-
         #self.imageLabel.setScaledContents(True)
 
         self.imageLabel.setPixmap(self.image)
-
         self.spiraler.setGeometry(QtCore.QRect(0, 0, self.image.size().width(), self.image.size().height()))
-
         self.spiraler.updateImage(self.image)
 
 
     def saveSvg(self):
-
         path = "save.svg"
-
         generator = QSvgGenerator()
         generator.setFileName(path)
         w = self.image.size().width()
@@ -97,17 +94,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         qp.end()
         self.statusBar.showMessage("SVG exported to %s" % (path), 1000)
 
-    def saveFileDialog(self):    
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(None,"QFileDialog.getSaveFileName()","","All Files (*);;Text Files (*.txt)", options=options)
-        if fileName:
-        print("resize")
-            print(fileName)
-
     def resizeEvent(self, event):
         #self.image = self.image.scaledToWidth(self.imageLabel.width())
-        pass
+        pass 
 
 if __name__ == "__main__":
 
