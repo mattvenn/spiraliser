@@ -13,27 +13,29 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
     NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
     return NewValue
 
+# maybe some good stuff here; https://github.com/baoboa/pyqt5/blob/master/examples/painting/svgviewer/svgviewer.py
+# also intertesting pixelator example here: http://doc.qt.io/qt-5/qtwidgets-itemviews-pixelator-example.html
+# svg generator example: http://doc.qt.io/qt-5/qtsvg-svggenerator-example.html
 class Spiraler(QtWidgets.QLabel):
 
     status_update_signal = pyqtSignal(str)
 
-    def __init__(self, parent):
+    def __init__(self, parent, main):
         super(Spiraler, self).__init__(parent=parent)
-        self.status_update_signal.connect(parent.updateStatus)
-        self.parent = parent
-        self.image = None
+        self.status_update_signal.connect(main.updateStatus)
+        self.pixmap = None
+        self.showImage = True
+        self.showSpiral = True
 
-    # maybe some good stuff here; https://github.com/baoboa/pyqt5/blob/master/examples/painting/svgviewer/svgviewer.py
-    # also intertesting pixelator example here: http://doc.qt.io/qt-5/qtwidgets-itemviews-pixelator-example.html
-
-    # svg generator example: http://doc.qt.io/qt-5/qtsvg-svggenerator-example.html
     def paintEvent(self, event):
         qp = QPainter(self)
         self.paint(qp)
         qp.end()
 
-    def updateImage(self, image):
-        self.image = image.toImage() # convert to image
+    def updatePixmap(self, pixmap):
+        self.setGeometry(QtCore.QRect(0, 0, pixmap.size().width(), pixmap.size().height()))
+        self.pixmap = pixmap
+        self.update()
 
     # slider update methods - really have to repeat all this?
     def updateDensity(self, value):
@@ -45,8 +47,12 @@ class Spiraler(QtWidgets.QLabel):
     def updateDist(self, value):
         self.dist = value
 
-    def updateShow(self, value):
-        self.show = value
+    def updateShowImage(self, value):
+        self.showImage = value
+        self.update()
+
+    def updateShowSpiral(self, value):
+        self.showSpiral = value
         self.update()
 
     @pyqtSlot(int)
@@ -57,8 +63,17 @@ class Spiraler(QtWidgets.QLabel):
     # this code is translated from java to python from https://github.com/krummrey/SpiralFromImage
     def paint(self, qp):
         
-        if not self.show or self.image is None:
+        if self.pixmap is None:
+            self.status_update_signal.emit("no image loaded")
             return
+
+        if self.showImage:
+            qp.drawPixmap(0, 0, self.pixmap) 
+        
+        if not self.showSpiral:
+            return
+
+        image = self.pixmap.toImage() # convert to image
 
         density = self.density
         dist = self.dist
@@ -76,13 +91,13 @@ class Spiraler(QtWidgets.QLabel):
         k = density/radius 
         alpha += k
         radius += dist/(360/k)
-        x =  aradius*cos(radians(alpha))+self.image.width()/2
-        y = -aradius*sin(radians(alpha))+self.image.height()/2
+        x =  aradius*cos(radians(alpha))+image.width()/2
+        y = -aradius*sin(radians(alpha))+image.height()/2
         samples = 0
 
         # when have we reached the far corner of the image?
         # TODO: this will have to change if not centered
-        endRadius = sqrt(pow((self.image.width()/2), 2)+pow((self.image.height()/2), 2))
+        endRadius = sqrt(pow((image.width()/2), 2)+pow((image.height()/2), 2))
 
         shapeOn = False
         points = QPolygon()
@@ -93,22 +108,22 @@ class Spiraler(QtWidgets.QLabel):
             alpha += k
             radius += dist/(360/k)
 
-            x =  radius*cos(radians(alpha))+self.image.width()/2
-            y = -radius*sin(radians(alpha))+self.image.height()/2
+            x =  radius*cos(radians(alpha))+image.width()/2
+            y = -radius*sin(radians(alpha))+image.height()/2
 
             # Are we within the the image?
             # If so check if the shape is open. If not, open it
-            if ((x>=0) and (x<self.image.width()-1) and (y>0) and (y<self.image.height())):
+            if ((x>=0) and (x<image.width()-1) and (y>0) and (y<image.height())):
                 samples += 1
                 # Get the color and brightness of the sampled pixel
-                c = self.image.pixel(int(x), int(y))
+                c = image.pixel(int(x), int(y))
                 b = qGray(c)
                 b = remap(b, 0, 255, dist*ampScale, 0)
 
                 # Move up according to sampled brightness
                 aradius = radius+(b/dist)
-                xa =  aradius*cos(radians(alpha))+self.image.width()/2
-                ya = -aradius*sin(radians(alpha))+self.image.height()/2
+                xa =  aradius*cos(radians(alpha))+image.width()/2
+                ya = -aradius*sin(radians(alpha))+image.height()/2
 
                 # Move around depending on density
                 k = (density/2)/radius 
@@ -117,8 +132,8 @@ class Spiraler(QtWidgets.QLabel):
 
                 # Move down according to sampled brightness
                 bradius = radius-(b/dist)
-                xb =  bradius*cos(radians(alpha))+self.image.width()/2
-                yb = -bradius*sin(radians(alpha))+self.image.height()/2
+                xb =  bradius*cos(radians(alpha))+image.width()/2
+                yb = -bradius*sin(radians(alpha))+image.height()/2
 
                 # Add vertices to shape
                 if (shapeOn == False) :

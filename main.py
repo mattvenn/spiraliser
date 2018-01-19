@@ -18,7 +18,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.image = None
 
-        self.spiraler = Spiraler(self)
+        self.spiraler = Spiraler(self.imageFrame, self)
 
         # hook menus
         self.actionOpen.triggered.connect(self.openFileDialog)
@@ -38,47 +38,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.exportSVG.clicked.connect(self.saveSvg)
 
-        self.showSpiral.clicked.connect(self.spiraler.updateShow)
-        self.showImage.clicked.connect(self.updateShow)
+        self.showSpiral.clicked.connect(self.spiraler.updateShowSpiral)
+        self.showImage.clicked.connect(self.spiraler.updateShowImage)
 
         # load the image without having to faff with menus
-        image = QPixmap("./fade.jpg")
-        # self.updateImage(image)
+        # pixmap = QPixmap("./fade.jpg")
+        # self.updatePixmap(pixmap)
 
     @QtCore.pyqtSlot(str)
     def updateStatus(self, value):
         self.statusBar.showMessage(value, 1000)
    
-    def updateShow(self, value):
-        if value and self.image is not None:
-            self.imageLabel.setPixmap(self.image)
-        else:
-            self.imageLabel.clear()
-        
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(None,"Choose image", "","Image Files (*.jpg)", options=options)
         if fileName:
-            image = QPixmap(fileName)
-            if image.isNull():
+            pixmap = QPixmap(fileName)
+            if pixmap.isNull():
                 QMessageBox.information(self, "Image Viewer", "Cannot load %s." % fileName)
                 return
 
-            self.updateImage(image)
+            self.updatePixmap(pixmap)
     
-    def updateImage(self, image):
-        self.image = image
-
-        # can't get scaling to work - oh well.
-        #self.image = self.image.scaledToWidth(self.tab_2.width())
-        #image = image.scaled(self.tab_2.width(), self.tab_2.height())
-        #self.imageLabel.setScaledContents(True)
-
-        self.imageLabel.setPixmap(self.image)
-        self.spiraler.setGeometry(QtCore.QRect(0, 0, self.image.size().width(), self.image.size().height()))
-        self.spiraler.updateImage(self.image)
-
+    def updatePixmap(self, pixmap):
+        self.spiraler.updatePixmap(pixmap)
 
     def saveSvg(self):
         path = "save.svg"
@@ -93,10 +77,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spiraler.paint(qp)
         qp.end()
         self.statusBar.showMessage("SVG exported to %s" % (path), 1000)
-
-    def resizeEvent(self, event):
-        #self.image = self.image.scaledToWidth(self.imageLabel.width())
-        pass 
 
 if __name__ == "__main__":
 
