@@ -2,6 +2,8 @@
 
 converts a jpg image into an SVG spiral. 
 
+![example](example.jpg)
+
 # Requirements
 
 * Python3
