@@ -37,6 +37,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.distSlider.setValue(30)
 
         self.exportSVG.clicked.connect(self.saveSvg)
+        self.exportHPGL.clicked.connect(self.saveHPGL)
 
         self.showSpiral.clicked.connect(self.spiraler.updateShowSpiral)
         self.showImage.clicked.connect(self.spiraler.updateShowImage)
@@ -77,6 +78,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spiraler.paint(qp)
         qp.end()
         self.statusBar.showMessage("SVG exported to %s" % (path), 1000)
+
+    def saveHPGL(self):
+        # maybe this should popup in another window and show the output of the command in a scrolling text box
+        """
+        ./src/pstoedit -xscale 1.39 -yscale 1.39  -yshift -600 -xshift -1100 -centered -f hpgl  ~/work/vec/turing.eps drawing.hpgl
+        """
 
 if __name__ == "__main__":
 
