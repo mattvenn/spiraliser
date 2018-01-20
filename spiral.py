@@ -27,6 +27,25 @@ class Spiraler(QtWidgets.QLabel):
         self.showImage = True
         self.showSpiral = True
 
+    def saveSvg(self):
+        path = "save.svg"
+        generator = QSvgGenerator()
+        generator.setFileName(path)
+        w = self.pixmap.size().width()
+        h = self.pixmap.size().height()
+        generator.setSize(QSize(w, h))
+        generator.setViewBox(QRect(0, 0, w, h))
+        generator.setTitle("Spiraliser!")
+        qp = QPainter(generator)
+
+        showImage = self.showImage
+        self.showImage = False
+        self.paint(qp)
+        self.showImage = showImage
+
+        qp.end()
+        self.status_update_signal.emit("SVG exported to %s" % (path))
+
     def paintEvent(self, event):
         qp = QPainter(self)
         self.paint(qp)
