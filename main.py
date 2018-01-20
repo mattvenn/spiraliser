@@ -41,7 +41,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # load the image without having to faff with menus
         pixmap = QPixmap("./alan.jpg")
-        self.updatePixmap(pixmap)
+        self.spiraler.updatePixmap(pixmap)
 
     @QtCore.pyqtSlot(str)
     def updateStatus(self, value):
@@ -57,17 +57,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, "Image Viewer", "Cannot load %s." % fileName)
                 return
 
-            self.updatePixmap(pixmap)
+            self.spiraler.updatePixmap(pixmap)
     
-    def updatePixmap(self, pixmap):
-        self.spiraler.updatePixmap(pixmap)
-
-
-    def saveHPGL(self):
-        # maybe this should popup in another window and show the output of the command in a scrolling text box
-        """
-        ./src/pstoedit -xscale 1.39 -yscale 1.39  -yshift -600 -xshift -1100 -centered -f hpgl  ~/work/vec/turing.eps drawing.hpgl
-        """
 
 if __name__ == "__main__":
 

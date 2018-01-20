@@ -1,4 +1,5 @@
 from math import cos, sin, radians, sqrt
+from subprocess import check_output, STDOUT, CalledProcessError
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow,QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget , QButtonGroup, QFileDialog
 from PyQt5.QtGui import QPainter, QImage, QPainterPath
@@ -12,6 +13,15 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
     NewRange = (NewMax - NewMin)  
     NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
     return NewValue
+
+def runCommand(cmd):
+    try:
+        o = check_output(cmd, stderr=STDOUT, shell=True)
+        returncode = 0
+    except CalledProcessError as ex:
+        o = ex.output
+        returncode = ex.returncode
+    return returncode, o
 
 # maybe some good stuff here; https://github.com/baoboa/pyqt5/blob/master/examples/painting/svgviewer/svgviewer.py
 # also intertesting pixelator example here: http://doc.qt.io/qt-5/qtwidgets-itemviews-pixelator-example.html
@@ -27,8 +37,32 @@ class Spiraler(QtWidgets.QLabel):
         self.showImage = True
         self.showSpiral = True
 
+    def saveHPGL(self):
+        # maybe this should popup in another window and show the output of the command in a scrolling text box
+        # convert to eps
+        path = 'save.hpgl'
+        self.status_update_signal.emit("exporting HPGL to %s" % (path))
+        cmd = 'inkscape save.svg --export-eps %s' % path
+        returncode, output = runCommand(cmd)
+        if returncode != 0:
+            self.status_update_signal.emit("inkscape conversion to eps failed")
+            print(output)
+            return
+
+        # convert eps to hpgl - pstoedit needs to be recompiled to handle the number of drawing segments
+        pstoedit = '/home/mattvenn/Downloads/pstoedit-3.70/src/pstoedit'
+        # don't know how to handle scale and shifting nicely, understanding the units would be a start
+        # probably best to use chipotle to generate the hpgl ourselves
+        cmd = pstoedit + ' -xscale 1.39 -yscale 1.39 -yshift -600 -xshift -1100 -centered -f hpgl save.eps save.hpgl'
+        returncode, output = runCommand(cmd)
+        if returncode != 0:
+            self.status_update_signal.emit("pstoedit conversion to hpgl failed")
+            print(output)
+            return
+
     def saveSvg(self):
         path = "save.svg"
+        self.status_update_signal.emit("exporting SVG to %s" % (path))
         generator = QSvgGenerator()
         generator.setFileName(path)
         w = self.pixmap.size().width()
@@ -44,7 +78,8 @@ class Spiraler(QtWidgets.QLabel):
         self.showImage = showImage
 
         qp.end()
-        self.status_update_signal.emit("SVG exported to %s" % (path))
+
+        self.saveHPGL()
 
     def paintEvent(self, event):
         qp = QPainter(self)
@@ -113,6 +148,7 @@ class Spiraler(QtWidgets.QLabel):
         x =  aradius*cos(radians(alpha))+image.width()/2
         y = -aradius*sin(radians(alpha))+image.height()/2
         samples = 0
+        lines = 0
 
         # when have we reached the far corner of the image?
         # TODO: this will have to change if not centered
@@ -165,14 +201,16 @@ class Spiraler(QtWidgets.QLabel):
                 # We are outside of the image so close the shape if it is open
                 if shapeOn == True:
                     qp.drawPolyline(points)
+                    lines += len(points)
                     points.clear()
                     shapeOn = False
             
           
         if shapeOn:
             qp.drawPolyline(points)
+            lines += len(points)
             points.clear()
 
         process_time = time.time() - start_time
-        self.status_update_signal.emit("finished in %f secs, took %d samples" % (process_time, samples))
+        self.status_update_signal.emit("finished in %f secs, took %d samples, drew %d lines" % (process_time, samples, lines))
 
