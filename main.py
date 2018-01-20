@@ -16,7 +16,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.image = None
 
         self.spiraler = Spiraler(self.imageFrame, self)
 
@@ -36,14 +35,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sensSlider.setValue(20)
         self.distSlider.setValue(30)
 
-        self.exportSVG.clicked.connect(self.saveSvg)
-
+        self.exportSVG.clicked.connect(self.spiraler.saveSvg)
         self.showSpiral.clicked.connect(self.spiraler.updateShowSpiral)
         self.showImage.clicked.connect(self.spiraler.updateShowImage)
 
         # load the image without having to faff with menus
-        # pixmap = QPixmap("./fade.jpg")
-        # self.updatePixmap(pixmap)
+        pixmap = QPixmap("./alan.jpg")
+        self.updatePixmap(pixmap)
 
     @QtCore.pyqtSlot(str)
     def updateStatus(self, value):
@@ -64,19 +62,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def updatePixmap(self, pixmap):
         self.spiraler.updatePixmap(pixmap)
 
-    def saveSvg(self):
-        path = "save.svg"
-        generator = QSvgGenerator()
-        generator.setFileName(path)
-        w = self.image.size().width()
-        h = self.image.size().height()
-        generator.setSize(QSize(w, h))
-        generator.setViewBox(QRect(0, 0, w, h))
-        generator.setTitle("Spiraliser!")
-        qp = QPainter(generator)
-        self.spiraler.paint(qp)
-        qp.end()
-        self.statusBar.showMessage("SVG exported to %s" % (path), 1000)
 
 if __name__ == "__main__":
 
