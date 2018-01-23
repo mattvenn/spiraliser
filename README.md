@@ -30,8 +30,12 @@ format is needed.
     inkscape save.svg --export-eps save.eps
 
 works on some files but on others, the exported eps is a rastered image of the
-vectors, so pstoedit can't use it. Seems to work better on svg files that
-inkscape hasn't authored.
+vectors, so pstoedit can't use it. 
+One thing that definitly will fail to export to vector eps is a square converted
+to path. A path drawn with the line tool works.
+
+If the SVG is 100mm square, then after converting to hpgl, will also be 100mm
+square. Not sure about if it will measure 100mm on the plotter yet.
 
 ## eps to hpgl
 
